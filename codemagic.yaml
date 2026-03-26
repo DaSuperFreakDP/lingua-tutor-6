@@ -1,0 +1,45 @@
+workflows:
+  ios-build:
+    name: iOS Build
+    max_build_duration: 60
+
+    environment:
+      node: 20
+      xcode: latest
+
+    scripts:
+      - name: Install dependencies
+        script: npm install
+
+      - name: Generate iOS project
+        script: npx expo prebuild --platform ios --non-interactive
+
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Build archive
+        script: |
+          export NODE_BINARY=$(which node)
+
+          xcodebuild \
+          -workspace ios/*.xcworkspace \
+          -scheme $(ls ios | grep xcodeproj | sed 's/.xcodeproj//') \
+          -configuration Release \
+          -sdk iphoneos \
+          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGNING_REQUIRED=NO \
+          archive \
+          -archivePath build/App.xcarchive
+
+      - name: Create unsigned IPA
+        script: |
+          mkdir -p build/Payload
+          cp -R build/App.xcarchive/Products/Applications/*.app build/Payload/
+          cd build
+          zip -r Italiano.ipa Payload
+
+    artifacts:
+      - build/*.ipa

@@ -1,1 +1,1 @@
-# lingua-tutor-6
+# lingua-tutor
